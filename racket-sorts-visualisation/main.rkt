@@ -7,21 +7,25 @@
 (define WIDTH 600)
 (define HEIGHT 600)
 
-(define MAX 10)
+(define MAX 50)
 (define MIN 1)
+(define NUM 25)
 
+(define SLEEP .02)
+(define COLOR "green")
 
-(define SLEEP .2)
-
-(define NAME 'the-vec)
-(define the-vec (list->vector (build-list 10 (λ (_x) (+ (random (- MAX MIN)) MIN)))))
+(define the-vec (list->vector (build-list NUM (λ (_x) (+ (random (- MAX MIN)) MIN)))))
+(define current 0)
 ;; Functions
 
-(define (user:on-paint vec dc)
+(define (draw-vector vec dc)
   (define i 0)
   (define w (/ WIDTH (vector-length vec)))
   (define h (/ (- HEIGHT 10) MAX))
   (vector-map (λ (elem)
+                (if (= i current) 
+                    (send dc set-brush (new brush% (color COLOR)))
+                    (send dc set-brush (new brush% (color "blue"))))
                 (send dc draw-rectangle (* w i) (- HEIGHT (* h elem)) (- w 1) (* h elem))
                 (set! i (add1 i)))
               vec))
@@ -29,12 +33,12 @@
 ;; Subclasses
 (define my-canvas%
   (class canvas%
-    (inherit get-dc refresh)
+    (inherit get-dc)
     (super-new)
     
     (define/override (on-paint)
       (send (get-dc) suspend-flush)
-      (user:on-paint the-vec (get-dc))
+      (draw-vector the-vec (get-dc))
       (send (get-dc) resume-flush))))
     
 ;; Main
@@ -47,15 +51,6 @@
 
 (send frame show #t)
 
-#|(define (draw-vector vec)
-  (define i 0)
-  (define w (/ WIDTH (vector-length vec)))
-  (define h (/ (- HEIGHT 10) MAX))
-  (vector-map (λ (elem)
-                (send dc draw-rectangle (* w i) (- HEIGHT (* h elem)) (- w 1) (* h elem))
-                (set! i (add1 i)))
-              vec))|#
-
 (define (bubble-sort name)
   (define swapped #f)
   (define v name)
@@ -65,6 +60,7 @@
     (set! i 0)
     (set! swapped #f)
     (let inner ()
+      (set! current i)
       (send canvas refresh-now)
       (sleep SLEEP)
       (cond ((> (vector-ref v i) (vector-ref v (+ i 1)))
@@ -74,9 +70,7 @@
           (set! swapped #t)))
       (set! i (add1 i))
       (when (< i (- (vector-length v) 1)) (inner)))
-    (when swapped (loop)))
-  v)
+    (when swapped (loop))))
 
-;(eval NAME)
-the-vec
+;;the-vec
 (bubble-sort the-vec)
