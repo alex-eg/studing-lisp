@@ -72,5 +72,7 @@
       (when (< i (- (vector-length v) 1)) (inner)))
     (when swapped (loop))))
 
-;;the-vec
+(let ((purple (make-object color%)))
+  (send purple set 159 168 76)
+  (send canvas set-canvas-background purple))
 (bubble-sort the-vec)
