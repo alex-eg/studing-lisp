@@ -1,4 +1,4 @@
-;;#lang racket
+#lang racket
 
 ;; Requires
 (require racket/gui/base)

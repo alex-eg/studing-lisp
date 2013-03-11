@@ -11,7 +11,7 @@
 (define MIN 1)
 (define NUM 25)
 
-(define SLEEP .02)
+(define SLEEP .2)
 (define COLOR "green")
 
 (define the-vec (list->vector (build-list NUM (λ (_x) (+ (random (- MAX MIN)) MIN)))))
