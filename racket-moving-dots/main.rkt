@@ -1,4 +1,4 @@
-#lang racket
+;;#lang racket
 
 ;; Requires
 (require racket/gui/base)
@@ -24,12 +24,12 @@
                                   (+ MIN-SPEED (random (- MAX-SPEED MIN-SPEED))))))
 
 (define (update-dot dot)
-  (let 
+  (let
       ((dot-x (position-x (moving-dot-position dot)))
        (dot-y (position-y (moving-dot-position dot)))
        (dot-dx (velocity-x (moving-dot-velocity dot)))
        (dot-dy (velocity-y (moving-dot-velocity dot))))
-    (let 
+    (let
         ((new-dx (if (or (> (+ dot-x dot-dx) WIDTH)
                          (< (+ dot-x dot-dx) 0))
                      (- dot-dx)
@@ -45,7 +45,7 @@
 (define (make-dot-list n)
   (define (make-dot-list-acc n acc)
     (if (= n 0) acc
-         (make-dot-list-acc (- n 1) (cons (make-random-dot) acc))))
+        (make-dot-list-acc (- n 1) (cons (make-random-dot) acc))))
   (make-dot-list-acc n empty))
 
 (define (update-dots dot-list)
@@ -54,23 +54,23 @@
 ;; Main
 (define dots (make-dot-list 20))
 
-(define frame (new frame% 
+(define frame (new frame%
                    (label "Moving dots")
                    (width WIDTH)
                    (height HEIGHT)))
 
-(define canvas (new canvas% 
+(define canvas (new canvas%
                     (parent frame)
                     (style (list 'border))
                     (paint-callback
                      (λ (canvas dc)
-                       (map (λ (dot)
-                              (send dc draw-ellipse 
-                                    (position-x (moving-dot-position dot))
-                                    (position-y (moving-dot-position dot))
-                                    5 5))
-                            dots)
-                       (set! dots (update-dots dots))))))
+                        (map (λ (dot)
+                                (send dc draw-ellipse
+                                      (position-x (moving-dot-position dot))
+                                      (position-y (moving-dot-position dot))
+                                      5 5))
+                             dots)
+                        (set! dots (update-dots dots))))))
 
 (let ((gray (make-object color%)))
   (send gray set 235 240 255)
@@ -78,9 +78,8 @@
 
 (send frame show #t)
 
-(let 
+(let
     ((t (new timer%
              (notify-callback (λ ()
-                                (send canvas refresh))))))
+                                 (send canvas refresh))))))
   (send t start 20))
-
