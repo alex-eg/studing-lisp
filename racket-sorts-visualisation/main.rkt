@@ -73,6 +73,6 @@
     (when swapped (loop))))
 
 (let ((purple (make-object color%)))
-  (send purple set 159 168 76)
+  (send purple set 230 224 76)
   (send canvas set-canvas-background purple))
 (bubble-sort the-vec)
