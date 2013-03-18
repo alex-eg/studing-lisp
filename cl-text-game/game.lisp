@@ -1,3 +1,4 @@
+
 ;;; Small text game engine
 ;;; From The Land of Lisp!
 
