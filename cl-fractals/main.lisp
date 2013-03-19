@@ -32,7 +32,10 @@
   (setf *rules* (cons (parse-rule text) *rules*)))
 
 (defun del-rule (text)
-  void)
+  (labels ((del-rule-list (clist char))
+	     (if (equal (caar clist) char)
+		 (setf 
+	       
 
 (defun set-axiom (text)
   (setf *axiom* text))
