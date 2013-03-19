@@ -4,47 +4,70 @@
 
 (in-package :cl-fractals)
 
-(defvar *axioms* '())
+;; Virtual machine
+(defvar *rules* '())
+(setf *rules* nil)
+(defvar *axiom* "")
+(setf *axiom* "")
+(defvar *depth* 0)
+(setf *depth* 0)
+(defvar *angle* 360/6)
+(setf *angle* 360/6)
 
-(defun add-axiom (listbox list text)
-    (listbox-append listbox text)
-    (setf list (cons text list)))
+(defun add-rule (text)
+  (setf *rules* (cons text *rules*)))
 
+(defun add-axiom (text)
+  (setf *axiom* text))
+
+
+
+
+(defun plot ()
+  (format t "rules: ~{~a~^, ~}~%theorem: ~a~%depth: ~a" *rules* *axiom* *depth*))
 
 (defun create-window ()
   (with-ltk ()
     (let* ((c (make-instance 'canvas :borderwidth 2 :relief :groove))
-	   (th (make-instance 'entry :text "theorem"))
+	   (axi (make-instance 'entry :text "FXF--FF--FF"))
 	   (f (make-instance 'frame :relief :groove :borderwidth 2))
 	   (lb (make-instance 'listbox :master f))
 	   (scrll (make-instance 'scrollbar :orientation :vertical :master f))
-	   (axi (make-instance 'entry :text "axiom"))
+	   (rul (make-instance 'entry :text "->"))
 	   (add (make-instance 'button :text "Add"
 			       :command (lambda ()
-					  (let ((txt (text axi)))
-					    (add-axiom lb *axioms* txt)))))
+					  (let ((txt (text rul)))
+					    (listbox-append lb txt)
+					    (add-rule txt)))))
 	   (del (make-instance 'button :text "Delete"
 			       :command (lambda ()
 					  (let ((sel (car (listbox-get-selection lb))))
 					    (if sel 
 						(progn 
 						  (listbox-delete lb sel)
-						  (listbox-select lb (- sel 1))))))))
+						  (cond ((> 0 (- sel 1)) (listbox-select lb sel))
+							(t (listbox-select lb (- sel 1))))))))))
 	   (dpth (make-instance 'entry :text "Depth"))
-	   (plot (make-instance 'button :text "Plot"))
-	   (quit (make-instance 'button :text "Quit")))
+	   (plot (make-instance 'button :text "Plot" 
+				:command (lambda ()
+					   (setf *axiom* (text axi))
+					   (setf *depth* (read-from-string (text dpth)))
+					   (plot))))
+	   (quit (make-instance 'button :text "Quit" 
+				:command (lambda ()
+					   (setf *exit-mainloop* t)))))
       ;; add scrollbar to listbox
       (configure scrll "command" (concatenate 'string (widget-path lb) " yview"))
       (configure lb "yscrollcommand" (concatenate 'string (widget-path scrll) " set"))
       ;; canvas and theorem entry
       (grid c 0 0 :rowspan 6 :sticky "ns")
-      (grid th 0 1 :columnspan 2 :padx 4 :sticky "we" :pady 2)
-      ;; frame with axioms list and a scrollbar
+      (grid axi 0 1 :columnspan 2 :padx 4 :sticky "we" :pady 2)
+      ;; frame with rules list and a scrollbar
       (grid f 1 1 :columnspan 2)
       (pack scrll :side :right :fill :y)
       (pack lb :side :left)
       ;; remaining widgets
-      (grid axi 2 1 :sticky "we" :columnspan 2 :padx 4 :pady 2)
+      (grid rul 2 1 :sticky "we" :columnspan 2 :padx 4 :pady 2)
       (grid add 3 1 :sticky "we")
       (grid del 3 2 :sticky "we")
       (grid dpth 4 1 :columnspan 2 :padx 4 :sticky "we" :pady 2)
