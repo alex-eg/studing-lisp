@@ -4,7 +4,7 @@
 
 (in-package :cl-fractals)
 
-;; Virtual machine
+;;; Virtual machine
 (defvar *rules* '())
 (setf *rules* nil)
 (defvar *axiom* "")
@@ -14,18 +14,36 @@
 (defvar *angle* 360/6)
 (setf *angle* 360/6)
 
-(defun add-rule (text)
-  (setf *rules* (cons text *rules*)))
+(defun parse-rule (text)
+  (labels ((accum-key (rlist accum)
+	   (if (and (equal (car rlist) #\-)
+		    (equal (cadr rlist) #\>))
+	       (cons accum (accum-value (cddr rlist) nil))
+	       (accum-key (cdr rlist)
+			  (append accum (list (car rlist))))))
+	   
+	   (accum-value (rlist accum)
+	     (if rlist (accum-value (cdr rlist)
+				    (append accum (list (car rlist))))
+		 accum)))
+    (accum-key (coerce text 'list) nil)))
 
-(defun add-axiom (text)
+(defun add-rule (text)
+  (setf *rules* (cons (parse-rule text) *rules*)))
+
+(defun del-rule (text)
+  void)
+
+(defun set-axiom (text)
   (setf *axiom* text))
 
-
-
+(defun set-depth (num)
+  (setf *depth* num))
 
 (defun plot ()
   (format t "rules: ~{~a~^, ~}~%theorem: ~a~%depth: ~a" *rules* *axiom* *depth*))
 
+;;; View 
 (defun create-window ()
   (with-ltk ()
     (let* ((c (make-instance 'canvas :borderwidth 2 :relief :groove))
@@ -50,8 +68,8 @@
 	   (dpth (make-instance 'entry :text "Depth"))
 	   (plot (make-instance 'button :text "Plot" 
 				:command (lambda ()
-					   (setf *axiom* (text axi))
-					   (setf *depth* (read-from-string (text dpth)))
+					   (set-axiom (text axi))
+					   (set-depth (read-from-string (text dpth)))
 					   (plot))))
 	   (quit (make-instance 'button :text "Quit" 
 				:command (lambda ()
