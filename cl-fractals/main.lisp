@@ -7,10 +7,13 @@
 ;;; Virtual machine
 (defvar *rules* '())
 (setf *rules* nil)
+
 (defvar *axiom* "")
 (setf *axiom* "")
+
 (defvar *depth* 0)
 (setf *depth* 0)
+
 (defvar *angle* 360/6)
 (setf *angle* 360/6)
 
@@ -31,11 +34,8 @@
 (defun add-rule (text)
   (setf *rules* (cons (parse-rule text) *rules*)))
 
-(defun del-rule (text)
-  (labels ((del-rule-list (clist char))
-	     (if (equal (caar clist) char)
-		 (setf 
-	       
+(defun del-rule (number)
+  (setf *rules* (remove (nth number *rules*) *rules* :test #'equal)))
 
 (defun set-axiom (text)
   (setf *axiom* text))
@@ -64,7 +64,8 @@
 			       :command (lambda ()
 					  (let ((sel (car (listbox-get-selection lb))))
 					    (if sel 
-						(progn 
+						(progn
+						  (del-rule sel)
 						  (listbox-delete lb sel)
 						  (cond ((> 0 (- sel 1)) (listbox-select lb sel))
 							(t (listbox-select lb (- sel 1))))))))))
