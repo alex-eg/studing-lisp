@@ -5,6 +5,24 @@
 (in-package :cl-fractals)
 
 ;;; Virtual machine
+
+#|
+
+(defclass l-machine ()
+  ((rules :accessor rules
+	  :initform nil
+	  :initarg :rules)
+   (axiom :accessor axiom
+	  :initform ""
+	  :initarg :axiom)
+   (angle :accessor angle
+	  :initform 360/6
+	  :initarg :angle)
+   (depth :accessor depth
+	  :initform 0
+	  :initarg :depth)))
+|#
+
 (defvar *rules* '())
 (setf *rules* nil)
 
@@ -44,12 +62,23 @@
   (setf *depth* num))
 
 (defun plot ()
-  (format t "rules: ~{~a~^, ~}~%theorem: ~a~%depth: ~a" *rules* *axiom* *depth*))
+  (labels ((rec-plot (cur-depth depth axiom-list)
+	     (if axiom-list 
+		 ;; recursing down
+		 (if (and (< cur-depth depth)
+			  (assoc (car axiom-list) *rules*))
+		     (rec-plot (+ 1 cur-depth) depth 
 
 ;;; View 
+
+(defvar *canvas-width* 800)
+(defvar *canvas-height* 600)
+
 (defun create-window ()
   (with-ltk ()
-    (let* ((c (make-instance 'canvas :borderwidth 2 :relief :groove))
+    (let* ((c (make-instance 'canvas			
+			     :width *canvas-width*
+     			     :height *canvas-height*))
 	   (axi (make-instance 'entry :text "FXF--FF--FF"))
 	   (f (make-instance 'frame :relief :groove :borderwidth 2))
 	   (lb (make-instance 'listbox :master f))
@@ -69,7 +98,7 @@
 						  (listbox-delete lb sel)
 						  (cond ((> 0 (- sel 1)) (listbox-select lb sel))
 							(t (listbox-select lb (- sel 1))))))))))
-	   (dpth (make-instance 'entry :text "Depth"))
+	   (dpth (make-instance 'entry :text "4"))
 	   (plot (make-instance 'button :text "Plot" 
 				:command (lambda ()
 					   (set-axiom (text axi))
@@ -82,7 +111,7 @@
       (configure scrll "command" (concatenate 'string (widget-path lb) " yview"))
       (configure lb "yscrollcommand" (concatenate 'string (widget-path scrll) " set"))
       ;; canvas and theorem entry
-      (grid c 0 0 :rowspan 6 :sticky "ns")
+      (grid c 0 0 :rowspan 6 :sticky "ns" :padx 4 :pady 4)
       (grid axi 0 1 :columnspan 2 :padx 4 :sticky "we" :pady 2)
       ;; frame with rules list and a scrollbar
       (grid f 1 1 :columnspan 2)
@@ -94,4 +123,7 @@
       (grid del 3 2 :sticky "we")
       (grid dpth 4 1 :columnspan 2 :padx 4 :sticky "we" :pady 2)
       (grid plot 5 1 :sticky "we")
-      (grid quit 5 2 :sticky "we"))))
+      (grid quit 5 2 :sticky "we")
+      ;; initialize canvas
+      (configure c :background "white")
+      (create-rectangle c 1 1 *canvas-width* *canvas-height*))))
