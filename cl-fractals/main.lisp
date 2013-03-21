@@ -32,10 +32,10 @@
 (defvar *depth* 0)
 (setf *depth* 0)
 
-(defvar *angle* 360/6)
-(setf *angle* 360/6)
+(defvar *angle* 4)
+(setf *angle* 4)
 
-(defun parse-rule (text)
+(defun parse-rule-multi (text)
   (labels ((accum-key (rlist accum)
 	   (if (and (equal (car rlist) #\-)
 		    (equal (cadr rlist) #\>))
@@ -49,6 +49,14 @@
 		 accum)))
     (accum-key (coerce text 'list) nil)))
 
+(defun parse-rule (text)
+  (labels ((accum-value (rlist accum)
+	     (if rlist (accum-value (cdr rlist)
+				    (append accum (list (car rlist))))
+		 accum)))
+    (let ((ctext (coerce text 'list)))
+      (cons (car ctext) (accum-value (cdddr ctext) nil)))))
+
 (defun add-rule (text)
   (setf *rules* (cons (parse-rule text) *rules*)))
 
@@ -61,14 +69,71 @@
 (defun set-depth (num)
   (setf *depth* num))
 
-(defun plot ()
-  (labels ((rec-plot (cur-depth depth axiom-list)
-	     (if axiom-list 
-		 ;; recursing down
-		 (if (and (< cur-depth depth)
-			  (assoc (car axiom-list) *rules*))
-		     (rec-plot (+ 1 cur-depth) depth 
 
+(defun print-contents ()
+  (format t "rules: ~{~a~^, ~}~%axiom: ~a~%depth: ~a~%" *rules* *axiom* *depth*))
+
+(defvar *x*)
+(setf *x* (/ *canvas-width* 2))
+
+(defvar *y*)
+(setf *y* (/ *canvas-height* 2))
+
+(defvar *a*)
+(setf *a* 0.0)
+
+(defvar *stack*)
+(setf *stack* nil)
+
+(defvar *len*)
+(setf *len* 4)
+
+(defstruct state x y a)
+
+(defun plot-fractal (c)
+  (labels ((rec-plot (cur-depth depth current-string c)
+	     (if current-string
+		 ;; recursing down
+	(progn	 (format t "cur-depth: ~a~%cur-string: ~a~%" cur-depth current-string)
+		 (if (and (< cur-depth depth)
+			  (assoc (car current-string) *rules*))
+		     (progn 
+		       (rec-plot (+ 1 cur-depth)
+				 depth
+				 (cdr (assoc (car current-string) *rules*))
+				 c)
+		       (rec-plot cur-depth depth (cdr current-string) c))
+		     (progn 
+		       (format t "~a~%" (car current-string))
+		       (cond ((equal (car current-string) #\F)
+			      (create-line c (list *x* *y* 
+					       (+ *x* (* *len* (cos *a*)))
+					       (+ *y* (* *len* (sin *a*)))))
+			      (setf *x* (+ *x* (* *len* (cos *a*))))
+			      (setf *y* (+ *y* (* *len* (sin *a*)))))
+		
+			     ((equal (car current-string) #\-) 
+			      (setf *a* (- *a* (/ (* 2 pi) *angle*))))
+			     
+			     ((equal (car current-string) #\+)
+			      (setf *a* (+ *a* (/ (* 2 pi) *angle*))))
+			     
+			     ((equal (car current-string) #\[)
+			      (setf *stack*
+				    (cons (make-state :x *x* :y *y* :a *a*)
+					  *stack*)))
+			     
+			     ((equal (car current-string) #\])
+			      (setf *a* (state-a (car *stack*)))
+			      (setf *x* (state-x (car *stack*)))
+			      (setf *y* (state-y (car *stack*)))
+			      (setf *stack* (cdr *stack*))))
+
+		       (rec-plot cur-depth depth (cdr current-string) c)))))))
+
+    (print-contents)
+    (rec-plot 0 *depth* (coerce *axiom* 'list) c)))
+		     
 ;;; View 
 
 (defvar *canvas-width* 800)
@@ -103,7 +168,7 @@
 				:command (lambda ()
 					   (set-axiom (text axi))
 					   (set-depth (read-from-string (text dpth)))
-					   (plot))))
+					   (plot-fractal c))))
 	   (quit (make-instance 'button :text "Quit" 
 				:command (lambda ()
 					   (setf *exit-mainloop* t)))))
