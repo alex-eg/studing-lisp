@@ -33,7 +33,7 @@
 (setf *depth* 0)
 
 (defvar *angle*)
-(setf *angle* 16)
+(setf *angle* 12)
 
 (defun parse-rule-multi (text)
   (labels ((accum-key (rlist accum)
