@@ -23,17 +23,17 @@
 	  :initarg :depth)))
 |#
 
-(defvar *rules* '())
+(defvar *rules*)
 (setf *rules* nil)
 
-(defvar *axiom* "")
+(defvar *axiom*)
 (setf *axiom* "")
 
-(defvar *depth* 0)
+(defvar *depth*)
 (setf *depth* 0)
 
-(defvar *angle* 4)
-(setf *angle* 4)
+(defvar *angle*)
+(setf *angle* 16)
 
 (defun parse-rule-multi (text)
   (labels ((accum-key (rlist accum)
@@ -73,6 +73,9 @@
 (defun print-contents ()
   (format t "rules: ~{~a~^, ~}~%axiom: ~a~%depth: ~a~%" *rules* *axiom* *depth*))
 
+(defvar *canvas-width* 800)
+(defvar *canvas-height* 600)
+
 (defvar *x*)
 (setf *x* (/ *canvas-width* 2))
 
@@ -94,7 +97,6 @@
   (labels ((rec-plot (cur-depth depth current-string c)
 	     (if current-string
 		 ;; recursing down
-	(progn	 (format t "cur-depth: ~a~%cur-string: ~a~%" cur-depth current-string)
 		 (if (and (< cur-depth depth)
 			  (assoc (car current-string) *rules*))
 		     (progn 
@@ -104,7 +106,6 @@
 				 c)
 		       (rec-plot cur-depth depth (cdr current-string) c))
 		     (progn 
-		       (format t "~a~%" (car current-string))
 		       (cond ((equal (car current-string) #\F)
 			      (create-line c (list *x* *y* 
 					       (+ *x* (* *len* (cos *a*)))
@@ -129,15 +130,12 @@
 			      (setf *y* (state-y (car *stack*)))
 			      (setf *stack* (cdr *stack*))))
 
-		       (rec-plot cur-depth depth (cdr current-string) c)))))))
+		       (rec-plot cur-depth depth (cdr current-string) c))))))
 
     (print-contents)
     (rec-plot 0 *depth* (coerce *axiom* 'list) c)))
 		     
 ;;; View 
-
-(defvar *canvas-width* 800)
-(defvar *canvas-height* 600)
 
 (defun create-window ()
   (with-ltk ()
