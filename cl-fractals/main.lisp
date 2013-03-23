@@ -5,24 +5,72 @@
 (in-package :cl-fractals)
 
 ;;; Virtual machine
-
-#|
-
 (defclass l-machine ()
-  ((rules :accessor rules
+  ;;; algorithm slots
+  ((rules :accessor lm-rules
 	  :initform nil
 	  :initarg :rules)
-   (axiom :accessor axiom
+   (axiom :accessor lm-axiom
 	  :initform ""
 	  :initarg :axiom)
-   (angle :accessor angle
-	  :initform 360/6
-	  :initarg :angle)
-   (depth :accessor depth
+   (angle-divisor :accessor lm-angle-divisor
+	  :initform 6
+	  :initarg :angle-divisor)
+   (depth :accessor lm-depth
 	  :initform 0
-	  :initarg :depth)))
-|#
+	  :initarg :depth)
 
+   ;;; state slots
+   (x :accessor lm-x
+      :initform 0
+      :initarg :x)
+   (y :accessor lm-y
+      :initform 0
+      :initarg :y)
+   (a :accessor lm-angle
+      :initform 0
+      :initarg :angle)))
+
+(defmethod lm-clear-state ((m l-machine))
+  (setf (lm-x m) 0)
+  (setf (lm-y m) 0)
+  (setf (lm-angle) 0))
+
+(defmethod lm-add-rule ((m l-machine) (text string))
+  (labels ((parse-rule (text)
+	     (let ((ctext (coerce text 'list)))
+	       (cons (car ctext) (accum-value (cdddr ctext) nil))))
+	   
+	   (accum-value (rlist accum)
+	     (if rlist 
+		 (accum-value (cdr rlist)
+			      (append accum (list (car rlist))))
+		 accum)))
+    
+    (setf (lm-rules m) 
+	  (cons (parse-rule text) (lm-rules m)))))
+
+(defmethod lm-del-rule ((m l-machine) (n integer))
+  (setf (lm-rules m)
+	(remove (nth n (lm-rules m)) (lm-rules m))))
+
+(defmethod lm-set-axiom ((m l-machine) (a string))
+  (setf (lm-axiom m) a))
+
+(defmethod lm-set-depth ((m l-machine) (n integer))
+  (setf (lm-depth m) n))
+
+(defmethod lm-set-angle-divisor ((m l-machine) (n integer))
+  (setf (lm-angle m) n))
+
+(defmethod lm-print-contents ((m l-machine))
+  (format t "rules: ~{~a~^, ~}~%axiom: ~a~%depth: ~a~%angle: ~a~%"
+	  (lm-rules m)
+	  (lm-axiom m)
+	  (lm-depth m)
+	  (lm-angle m)))
+
+;;; Functions
 (defvar *rules*)
 (setf *rules* nil)
 
