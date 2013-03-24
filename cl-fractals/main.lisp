@@ -29,7 +29,10 @@
       :initarg :y)
    (a :accessor lm-angle
       :initform 0
-      :initarg :angle)))
+      :initarg :angle)
+   (stack :accessor lm-stack
+	  :initform nil
+	  :initarg :stack)))
 
 (defmethod lm-clear-state ((m l-machine))
   (setf (lm-x m) 0)
@@ -40,13 +43,11 @@
   (labels ((parse-rule (text)
 	     (let ((ctext (coerce text 'list)))
 	       (cons (car ctext) (accum-value (cdddr ctext) nil))))
-	   
 	   (accum-value (rlist accum)
 	     (if rlist 
 		 (accum-value (cdr rlist)
 			      (append accum (list (car rlist))))
 		 accum)))
-    
     (setf (lm-rules m) 
 	  (cons (parse-rule text) (lm-rules m)))))
 
@@ -82,20 +83,6 @@
 
 (defvar *angle*)
 (setf *angle* 12)
-
-(defun parse-rule-multi (text)
-  (labels ((accum-key (rlist accum)
-	   (if (and (equal (car rlist) #\-)
-		    (equal (cadr rlist) #\>))
-	       (cons accum (accum-value (cddr rlist) nil))
-	       (accum-key (cdr rlist)
-			  (append accum (list (car rlist))))))
-	   
-	   (accum-value (rlist accum)
-	     (if rlist (accum-value (cdr rlist)
-				    (append accum (list (car rlist))))
-		 accum)))
-    (accum-key (coerce text 'list) nil)))
 
 (defun parse-rule (text)
   (labels ((accum-value (rlist accum)
