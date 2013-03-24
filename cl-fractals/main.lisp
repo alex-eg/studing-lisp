@@ -102,18 +102,6 @@
 (defvar *canvas-width* 800)
 (defvar *canvas-height* 600)
 
-(defvar *x*)
-(setf *x* (/ *canvas-width* 2))
-
-(defvar *y*)
-(setf *y* (/ *canvas-height* 2))
-
-(defvar *a*)
-(setf *a* 0.0)
-
-(defvar *stack*)
-(setf *stack* nil)
-
 (defvar *len*)
 (setf *len* 4)
 
