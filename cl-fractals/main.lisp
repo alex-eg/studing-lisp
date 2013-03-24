@@ -14,7 +14,7 @@
 	  :initform ""
 	  :initarg :axiom)
    (angle-divisor :accessor lm-angle-divisor
-	  :initform 6
+	  :initform 4
 	  :initarg :angle-divisor)
    (depth :accessor lm-depth
 	  :initform 0
@@ -37,7 +37,8 @@
 (defmethod lm-clear-state ((m l-machine))
   (setf (lm-x m) 0)
   (setf (lm-y m) 0)
-  (setf (lm-angle) 0))
+  (setf (lm-stack m) nil)
+  (setf (lm-angle m) 0))
 
 (defmethod lm-add-rule ((m l-machine) (text string))
   (labels ((parse-rule (text)
@@ -54,15 +55,6 @@
 (defmethod lm-del-rule ((m l-machine) (n integer))
   (setf (lm-rules m)
 	(remove (nth n (lm-rules m)) (lm-rules m))))
-
-(defmethod lm-set-axiom ((m l-machine) (a string))
-  (setf (lm-axiom m) a))
-
-(defmethod lm-set-depth ((m l-machine) (n integer))
-  (setf (lm-depth m) n))
-
-(defmethod lm-set-angle-divisor ((m l-machine) (n integer))
-  (setf (lm-angle m) n))
 
 (defmethod lm-print-contents ((m l-machine))
   (format t "rules: ~{~a~^, ~}~%axiom: ~a~%depth: ~a~%angle: ~a~%"
@@ -104,7 +96,6 @@
 (defun set-depth (num)
   (setf *depth* num))
 
-
 (defun print-contents ()
   (format t "rules: ~{~a~^, ~}~%axiom: ~a~%depth: ~a~%" *rules* *axiom* *depth*))
 
@@ -128,49 +119,65 @@
 
 (defstruct state x y a)
 
-(defun plot-fractal (c)
-  (labels ((rec-plot (cur-depth depth current-string c)
-	     (if current-string
-		 ;; recursing down
-		 (if (and (< cur-depth depth)
-			  (assoc (car current-string) *rules*))
-		     (progn 
-		       (rec-plot (+ 1 cur-depth)
-				 depth
-				 (cdr (assoc (car current-string) *rules*))
-				 c)
-		       (rec-plot cur-depth depth (cdr current-string) c))
-		     (progn 
-		       (cond ((equal (car current-string) #\F)
-			      (create-line c (list *x* *y* 
-					       (+ *x* (* *len* (cos *a*)))
-					       (+ *y* (* *len* (sin *a*)))))
-			      (setf *x* (+ *x* (* *len* (cos *a*))))
-			      (setf *y* (+ *y* (* *len* (sin *a*)))))
-		
-			     ((equal (car current-string) #\-) 
-			      (setf *a* (- *a* (/ (* 2 pi) *angle*))))
-			     
-			     ((equal (car current-string) #\+)
-			      (setf *a* (+ *a* (/ (* 2 pi) *angle*))))
-			     
-			     ((equal (car current-string) #\[)
-			      (setf *stack*
-				    (cons (make-state :x *x* :y *y* :a *a*)
-					  *stack*)))
-			     
-			     ((equal (car current-string) #\])
-			      (setf *a* (state-a (car *stack*)))
-			      (setf *x* (state-x (car *stack*)))
-			      (setf *y* (state-y (car *stack*)))
-			      (setf *stack* (cdr *stack*))))
+(defun plot-fractal (canvas lm)
+  (lm-clear-state lm)
+  (let ((depth (lm-depth lm))
+	(axiom (lm-axiom lm))
+	(rules (lm-rules lm))
+	(d-alpha (/ (* 2 pi) (lm-angle-divisor lm)))
+;	(x (lm-x lm))
+;	(y (lm-y lm))
+	(x (/ *canvas-width* 2))
+	(y (/ *canvas-height* 2))
+	(a (lm-angle lm))
+	(stack (lm-stack lm)))
+    (defun rec-plot (cur-depth depth current-string c)
+      (if current-string
+	  ;; recursing down
+	  (if (and (< cur-depth depth)
+		   (assoc (car current-string) rules))
+	      (progn 
+		(rec-plot (+ 1 cur-depth)
+			  depth
+			  (cdr (assoc (car current-string) rules))
+			  c)
+		(rec-plot cur-depth depth (cdr current-string) c))
+	      (progn 
+		(cond ((equal (car current-string) #\F)
+		       (create-line c (list x 
+					    y
+					    (+ x (* *len* (cos a)))
+					    (+ y (* *len* (sin a)))))
+		       (setf x (+ x (* *len* (cos a))))
+		       (setf y (+ y (* *len* (sin a))))
+		       )
+		      
+		      ((equal (car current-string) #\-) 
+		       (setf a (- a d-alpha)))
+		      
+		      ((equal (car current-string) #\+)
+		       (setf a (+ a d-alpha)))
+		      
+		      ((equal (car current-string) #\[)
+		       (setf stack
+			     (cons (make-state :x x :y y :a a)
+				   stack)))
+		      
+		      ((equal (car current-string) #\])
+		       (setf a (state-a (car stack)))
+		       (setf x (state-x (car stack)))
+		       (setf y (state-y (car stack)))
+		       (setf stack (cdr stack))))
 
-		       (rec-plot cur-depth depth (cdr current-string) c))))))
+		(rec-plot cur-depth depth (cdr current-string) c)))))
+    
+    (lm-print-contents lm)
+    (rec-plot 0 depth (coerce axiom 'list) canvas)))
 
-    (print-contents)
-    (rec-plot 0 *depth* (coerce *axiom* 'list) c)))
-		     
 ;;; View 
+
+(defvar *lm*)
+(setf *lm* (make-instance 'l-machine))
 
 (defun create-window ()
   (with-ltk ()
@@ -186,22 +193,22 @@
 			       :command (lambda ()
 					  (let ((txt (text rul)))
 					    (listbox-append lb txt)
-					    (add-rule txt)))))
+					    (lm-add-rule *lm* txt)))))
 	   (del (make-instance 'button :text "Delete"
 			       :command (lambda ()
 					  (let ((sel (car (listbox-get-selection lb))))
 					    (if sel 
 						(progn
-						  (del-rule sel)
+						  (lm-del-rule *lm* sel)
 						  (listbox-delete lb sel)
 						  (cond ((> 0 (- sel 1)) (listbox-select lb sel))
 							(t (listbox-select lb (- sel 1))))))))))
 	   (dpth (make-instance 'entry :text "4"))
 	   (plot (make-instance 'button :text "Plot" 
 				:command (lambda ()
-					   (set-axiom (text axi))
-					   (set-depth (read-from-string (text dpth)))
-					   (plot-fractal c))))
+					   (setf (lm-axiom *lm*) (text axi))
+					   (setf (lm-depth *lm*) (read-from-string (text dpth)))
+					   (plot-fractal c *lm*))))
 	   (quit (make-instance 'button :text "Quit" 
 				:command (lambda ()
 					   (setf *exit-mainloop* t)))))
