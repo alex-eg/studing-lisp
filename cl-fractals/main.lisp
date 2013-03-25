@@ -192,10 +192,12 @@
 						  (cond ((> 0 (- sel 1)) (listbox-select lb sel))
 							(t (listbox-select lb (- sel 1))))))))))
 	   (dpth (make-instance 'entry :text "4"))
+	   (angl (make-instance 'entry :text "4"))
 	   (plot (make-instance 'button :text "Plot" 
 				:command (lambda ()
 					   (setf (lm-axiom *lm*) (text axi))
 					   (setf (lm-depth *lm*) (read-from-string (text dpth)))
+					   (seyf (lm-angle-divisor *lm*) (read-from-string (text angl)))
 					   (plot-fractal c *lm*))))
 	   (quit (make-instance 'button :text "Quit" 
 				:command (lambda ()
@@ -204,7 +206,7 @@
       (configure scrll "command" (concatenate 'string (widget-path lb) " yview"))
       (configure lb "yscrollcommand" (concatenate 'string (widget-path scrll) " set"))
       ;; canvas and theorem entry
-      (grid c 0 0 :rowspan 6 :sticky "ns" :padx 4 :pady 4)
+      (grid c 0 0 :rowspan 7 :sticky "ns" :padx 4 :pady 4)
       (grid axi 0 1 :columnspan 2 :padx 4 :sticky "we" :pady 2)
       ;; frame with rules list and a scrollbar
       (grid f 1 1 :columnspan 2)
@@ -215,8 +217,9 @@
       (grid add 3 1 :sticky "we")
       (grid del 3 2 :sticky "we")
       (grid dpth 4 1 :columnspan 2 :padx 4 :sticky "we" :pady 2)
-      (grid plot 5 1 :sticky "we")
-      (grid quit 5 2 :sticky "we")
+      (grid angl 5 1 :columnspan 2 :padx 4 :sticky "we" :pady 2)
+      (grid plot 6 1 :sticky "we")
+      (grid quit 6 2 :sticky "we")
       ;; initialize canvas
       (configure c :background "white")
       (create-rectangle c 1 1 *canvas-width* *canvas-height*))))
