@@ -218,7 +218,7 @@
       (grid rul 2 1 :sticky "we" :columnspan 2 :padx 4 :pady 2)
       (grid add 3 1 :sticky "we")
       (grid del 3 2 :sticky "we")
-      (grid dpth_l 4 1)  
+      (grid dpth_l 4 1)
       (grid dpth 4 2 :padx 4 :sticky "we" :pady 2)
       (grid angl_l 5 1)
       (grid angl 5 2 :padx 4 :sticky "we" :pady 2)
