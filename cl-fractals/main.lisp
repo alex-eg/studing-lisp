@@ -1,3 +1,4 @@
+(ql:quickload "ltk")
 ;;; Define package
 (defpackage :cl-fractals
   (:use :ltk :cl))
