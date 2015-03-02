@@ -1,13 +1,11 @@
-(defpackage #:cffi-curl-test
-  (:use #:cl
-        #:cffi
-        #:asdf))
+(eval-when (:compile-toplevel)
+  (progn
+    (asdf:load-system :cffi)
+    (defpackage #:cffi-curl-test
+      (:use #:cl
+            #:cffi))))
 
 (in-package #:cffi-curl-test)
-
-(asdf:load-system :cffi)
-
-(use-package :cffi)
 
 (define-foreign-library libcurl
   (:unix "libcurl.so"))
@@ -26,7 +24,7 @@
 (defcfun "curl_easy_cleanup" :void
   (easy-handle :pointer))
 
-(defparameter *easy-handle* (curl-easy-init))
+(defparameter *easy-handle* nil)
 
 ;; CURLcode curl_easy_setopt(CURL *curl, CURLoption option, ...);
 ;;
@@ -60,7 +58,12 @@
   (setf (symbol-function fun-name)
         (let ((c-fun (symbol-function fun-name)))
           (lambda (easy-handle new-value)
-            (funcall c-fun easy-handle opt-kw new-value)))))
+            (funcall c-fun easy-handle opt-kw
+                     (if (stringp new-value)
+                         (add-curl-handle-cstring
+                          easy-handle
+                          (foreign-string-alloc new-value))
+                         new-value))))))
 
 (defmacro define-curl-option-setter (name option-type
                                      option-value foreign-type)
@@ -102,16 +105,56 @@
   (:noprogress long 43)
   (:nosignal long 99)
   (:errorbuffer objectpoint 10)
-  (:url objectpoint 2))
+  (:url objectpoint 2)
+  (:writefunction functionpoint 11))
 
 (defvar *easy-handle-cstrings* (make-hash-table))
+(defvar *easy-handle-errorbuffers* (make-hash-table))
+
+(defparameter *curl-error-size* 257)
 
 (defun make-easy-handle ()
   (let ((easy-handle (curl-easy-init)))
     (setf (gethash easy-handle *easy-handle-cstrings*) '())
+    (setf (gethash easy-handle *easy-handhle-errorbuffers*)
+          (foreign-alloc :char
+                         :count *curl-error-size*
+                         :initial-element 0))
     easy-handle))
 
 (defun free-easy-handle (handle)
   (curl-easy-cleanup handle)
-  (mapc #'foreign-string-free))
+  (foreign-free (gethash handle *easy-handle-errorbuffers*))
+  (mapc #'foreign-string-free
+        (gethash handle *easy-handle-cstrings*))
+  (remhash handle *easy-handle-cstrings*)
+  (setf handle nil))
+
+(defun get-easy-handle-error (handle)
+  (foreign-string-to-lisp
+   (gethash handle *easy-handle-errorbuffers*)))
+
+(defun add-curl-handle-cstring (handle cstring)
+  (car (push cstring (gethash handle *easy-handle-cstrings*))))
+
+(defctype size :unsigned-int)
+
+(defcallback easy-write size
+    ((ptr :pointer)
+     (size size)
+     (nmemb size)
+     (stream :pointer))
+  (declare (ignore stream))
+  (let ((data-size (* size nmemb)))
+    (handler-case
+        (progn (funcall (symbol-value '*easy-write-procedure*)
+                        (foreign-string-to-lisp ptr data-size nil))
+               data-size)
+      (error () (if (zerop data-size) 1 0)))))
+
+(defcfun "curl_easy_perform" curl-code
+  (handle easy-handle))
+
+
+
 
