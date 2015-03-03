@@ -118,6 +118,23 @@
                                   *easy-handle-errorbuffers*))
     easy-handle))
 
+(defcallback easy-write size
+    ((ptr :pointer)
+     (size size)
+     (nmemb size)
+     (stream :pointer))
+  (let ((data-size (* size nmemb)))
+    (handler-case
+        (progn
+          (format t "we even format?~%")
+          (funcall (symbol-value '*easy-write-procedure*)
+                   "lolwutufug")
+          (format t "what if... ~s~%" (foreign-string-to-lisp ptr data-size nil))
+          (funcall (symbol-value '*easy-write-procedure*)
+                   (foreign-string-to-lisp ptr data-size nil))
+          data-size)
+      (error () (if (zerop data-size) 1 0)))))
+
 (defun test-curl (url)
   (setf *easy-handle* (make-easy-handle))
   (set-curl-option-nosignal *easy-handle* 1)
