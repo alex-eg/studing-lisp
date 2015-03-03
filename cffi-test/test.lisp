@@ -126,10 +126,6 @@
   (let ((data-size (* size nmemb)))
     (handler-case
         (progn
-          (format t "we even format?~%")
-          (funcall (symbol-value '*easy-write-procedure*)
-                   "lolwutufug")
-          (format t "what if... ~s~%" (foreign-string-to-lisp ptr data-size nil))
           (funcall (symbol-value '*easy-write-procedure*)
                    (foreign-string-to-lisp ptr data-size nil))
           data-size)
