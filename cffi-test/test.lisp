@@ -127,7 +127,7 @@
     (handler-case
         (progn
           (funcall (symbol-value '*easy-write-procedure*)
-                   (foreign-string-to-lisp ptr data-size nil))
+                   (foreign-string-to-lisp ptr :count data-size))
           data-size)
       (error () (if (zerop data-size) 1 0)))))
 
