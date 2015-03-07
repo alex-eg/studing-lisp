@@ -123,6 +123,7 @@
      (size size)
      (nmemb size)
      (stream :pointer))
+  (declare (ignore stream))
   (let ((data-size (* size nmemb)))
     (handler-case
         (progn
