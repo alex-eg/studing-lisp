@@ -54,3 +54,27 @@
 (defun test-test ()
   (let ((*test* t))
     (collide (make-instance 'ship) (make-instance 'asteroid))))
+;;; Simple method combination definition
+
+(define-method-combination minus
+    :identity-with-one-argument t
+    :operator -)
+
+(defgeneric foo (a)
+  (:method-combination minus))
+
+(defclass A ()
+  ((a-value :initarg :a-value :accessor A-value)))
+
+(defclass B (A)
+  ((b-value :initarg :b-value :accessor B-value)))
+
+(defmethod foo minus ((a A))
+  (A-value a))
+
+(defmethod foo minus ((b B))
+  (B-value b))
+
+
+(let ((b (make-instance 'B :b-value 10 :a-value -10)))
+  (foo b))
