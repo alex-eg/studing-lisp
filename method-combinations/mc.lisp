@@ -54,11 +54,19 @@
 (defun test-test ()
   (let ((*test* t))
     (collide (make-instance 'ship) (make-instance 'asteroid))))
+
+(define-method-combination failsafe ()
+  ((primary () :required t)
+   (recover (:recover))))
+
 ;;; Simple method combination definition
 
 (define-method-combination minus
     :identity-with-one-argument t
     :operator -)
+
+(define-method-combination minus ()
+  )
 
 (defgeneric foo (a)
   (:method-combination minus))
